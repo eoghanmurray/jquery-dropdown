@@ -48,7 +48,7 @@ if (jQuery) (function ($) {
         } else {
             if (trigger !== object.target && $(object.target).hasClass('jq-dropdown-ignore')) return;
         }
-        hide();
+        hide(event);
 
         if (isOpen || trigger.hasClass('jq-dropdown-disabled')) return;
 
@@ -71,49 +71,50 @@ if (jQuery) (function ($) {
         // In some cases we don't hide them
         var targetGroup = event ? $(event.target).parents().addBack() : null;
 
-        // Are we clicking anywhere in a jq-dropdown?
-        if (targetGroup && targetGroup.is('.jq-dropdown')) {
-            // Is it a jq-dropdown menu?
-            if (targetGroup.is('.jq-dropdown-menu')) {
-                // Did we click on an option? If so close it.
-                if (!targetGroup.is('A')) return;
-            } else {
-                // Nope, it's a panel. Leave it open.
-                return;
-            }
+        // hide other dropdowns, but not the one we've clicked within
+        var toHide = $(document).find('.jq-dropdown:visible').not(
+            $(event.target).parents('.jq-dropdown'));
+
+        if (targetGroup && targetGroup.is('.jq-dropdown') &&
+            targetGroup.is('.jq-dropdown-menu') &&
+            targetGroup.is('A')) {
+            // Clicked an option within the current dropdown
+            // If this is a nested dropdown, make sure to keep the parent dropdown open
+            toHide = $(event.target).closest('.jq-dropdown:visible')
         }
 
         // Trigger the event early, so that it might be prevented on the visible popups
         var hideEvent = jQuery.Event("hide");
 
-        $(document).find('.jq-dropdown:visible').each(function () {
+
+        toHide.each(function () {
             var jqDropdown = $(this);
             jqDropdown
                 .hide()
-                .removeData('jq-dropdown-trigger')
                 .trigger('hide', { jqDropdown: jqDropdown });
         });
 
         if(!hideEvent.isDefaultPrevented()) {
             // Hide any jq-dropdown that may be showing
-            $(document).find('.jq-dropdown:visible').each(function () {
+            toHide.each(function () {
+                // Remove all jq-dropdown-open classes
                 var jqDropdown = $(this);
+                var trigger = jqDropdown.data('jq-dropdown-trigger');
+                trigger.removeClass('jq-dropdown-open');
                 jqDropdown
                     .hide()
                     .removeData('jq-dropdown-trigger')
                     .trigger('hide', { jqDropdown: jqDropdown });
             });
-
-            // Remove all jq-dropdown-open classes
-            $(document).find('.jq-dropdown-open').removeClass('jq-dropdown-open');
         }
     }
 
     function window_resize() {
-        var jqDropdown = $('.jq-dropdown:visible').eq(0)
-        if (jqDropdown.length === 0) return;
-        jqDropdown.hide(); // we need to be able to get a clean doc_height
-        position(jqDropdown);
+        $('.jq-dropdown:visible').each(function() {
+            var jqDropdown = $(this);
+            jqDropdown.hide(); // we need to be able to get a clean doc_height
+            position(jqDropdown);
+        });
     }
 
     function position(jqDropdown) {
