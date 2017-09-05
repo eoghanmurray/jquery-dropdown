@@ -181,6 +181,9 @@ if (jQuery) (function ($) {
                 )
             }
         }
+        for (pos_attr in pos) {
+            pos[pos_attr] = Math.round(pos[pos_attr]);
+        }
         jqDropdown.css(pos);
     }
 
