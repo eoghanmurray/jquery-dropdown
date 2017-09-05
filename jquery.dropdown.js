@@ -129,6 +129,9 @@ if (jQuery) (function ($) {
         var doc_height = jQuery(document).height();
 
         // Reset adjustments so we get a proper idea of ideal dimensions
+        jqDropdown.children('.jq-dropdown-panel, .jq-dropdown-menu').css(
+            {'margin-left': 0, 'margin-right': 0}
+        )
         jqDropdown
             .css({'top': 'auto', 'left': 'auto', 'right': 'auto', 'bottom': 'auto'})
 
@@ -137,6 +140,7 @@ if (jQuery) (function ($) {
         jqDropdown.show();
 
         var pos = {};
+        var dropdownViewportLeft = 0;
         // Position the jq-dropdown relative-to-parent...
         if (jqDropdown.hasClass('jq-dropdown-relative')) {
             pos['left'] = jqDropdown.hasClass('jq-dropdown-anchor-right') ?
@@ -147,6 +151,9 @@ if (jQuery) (function ($) {
             } else {
                 pos['top'] = trigger.position().top + trigger.outerHeight(true) - parseInt(trigger.css('margin-top'), 10) + vOffset;
             }
+            dropdownViewportLeft = jqDropdown.hasClass('jq-dropdown-anchor-right') ?
+                trigger.offset().left - (jqDropdown.outerWidth(true) - trigger.outerWidth(true)) + hOffset :
+                trigger.offset().left + hOffset;
         } else {
             // ...or relative to document
             pos['left'] = jqDropdown.hasClass('jq-dropdown-anchor-right') ?
@@ -155,6 +162,23 @@ if (jQuery) (function ($) {
                 pos['bottom'] = doc_height - trigger.offset().top - vOffset;
             } else {
                 pos['top'] = trigger.offset().top + trigger.outerHeight() + vOffset;
+            }
+            dropdownViewportLeft = pos['left'];
+        }
+        if (jqDropdown.hasClass('jq-dropdown-anchor-right')) {
+            if (dropdownViewportLeft < 0) {
+                pos['left'] = 0;
+                // the following only moves the right-anchored dropdown-tip
+                jqDropdown.children('.jq-dropdown-panel, .jq-dropdown-menu').css(
+                    {'margin-right':  Math.floor(dropdownViewportLeft) }
+                )
+            }
+        } else {
+            if (dropdownViewportLeft + jqDropdown.outerWidth() > jQuery(window).width()) {
+                // only apply to child panel/menu to keep the dropdown-tip in the right place
+                jqDropdown.children('.jq-dropdown-panel, .jq-dropdown-menu').css(
+                    {'margin-left':  Math.floor(-((dropdownViewportLeft + jqDropdown.outerWidth()) - jQuery(window).width())) }
+                )
             }
         }
         jqDropdown.css(pos);
